@@ -14,4 +14,3 @@ class Item(pygame.sprite.Sprite):
         color = (200, 200, 0) if item_type == "weapon" else (0, 0, 200)
         self.image.fill(color)
         self.rect = self.image.get_rect(midbottom=pos)
-

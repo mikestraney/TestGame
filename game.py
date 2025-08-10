@@ -19,6 +19,7 @@ def run():
     bullets = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
     items = pygame.sprite.Group()
+
     # some starting pickups
     items.add(
         Item((200, GROUND_LEVEL), "weapon", "blaster"),
@@ -32,28 +33,34 @@ def run():
     font = pygame.font.SysFont(None, 32)
     running = True
     while running:
-        dt = clock.tick(FPS)
+        dt_ms = clock.tick(FPS)           # milliseconds
+        dt = dt_ms / 1000.0               # seconds (often what physics engines expect)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == enemy_event:
-                enemy = Enemy(WIDTH + 40, GROUND_LEVEL)
-                enemies.add(enemy)
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            elif event.type == enemy_event:
+                enemies.add(Enemy(WIDTH + 40, GROUND_LEVEL))
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 player.shoot(bullets)
 
         keys = pygame.key.get_pressed()
-        level.update(dt)
+
+        # --- Update phase ---
+        level.update(dt)          # if your Level expects seconds, pass dt; if ms, pass dt_ms
         player.update(keys)
         bullets.update()
         enemies.update()
         items.update()
-        physics.update(dt)
+
+        physics.update(dt)        # step your physics world; change to dt_ms if your helper expects ms
+
+        # keep sprites aligned with physics bodies
         player.sync_with_body(level.platform_rects)
         for enemy in enemies:
             enemy.sync_with_body()
 
-        # collisions
+        # --- Collisions & pickups ---
         hits = pygame.sprite.groupcollide(bullets, enemies, True, False)
         for enemy_list in hits.values():
             for enemy in enemy_list:
@@ -62,14 +69,16 @@ def run():
                     items.add(drop)
                 enemy.kill()
                 score += 1
-        # player picks up items
+
         pickups = pygame.sprite.spritecollide(player, items, True)
         for item in pickups:
             player.inventory.equip(item.item_type, item.name)
+
         if pygame.sprite.spritecollide(player, enemies, False):
             running = False
 
-        level.draw(screen)
+        # --- Draw ---
+        level.draw(screen)  # draw the tilemap/background
         all_sprites = pygame.sprite.Group(player, items, bullets, enemies)
         all_sprites.draw(screen)
 
