@@ -3,7 +3,7 @@ import pygame
 
 
 class Item(pygame.sprite.Sprite):
-    """A simple pick‑up item that equips the player."""
+    """A simple pick-up item that equips the player."""
 
     def __init__(self, pos, item_type, name):
         super().__init__()
