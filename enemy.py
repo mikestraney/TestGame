@@ -1,7 +1,9 @@
+import random
 import pygame
 import pymunk
 import physics
 from settings import ENEMY_SPEED, FPS
+from item import Item
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -32,3 +34,15 @@ class Enemy(pygame.sprite.Sprite):
     def kill(self) -> None:
         physics.space.remove(self.body, self.shape)
         super().kill()
+
+    # hooks for item drops
+    def drop(self):
+        """Return an ``Item`` dropped by this enemy or ``None``.
+
+        The default implementation gives a small random chance to drop a
+        weapon upgrade. Sub-classes can override this to provide custom drop
+        behaviour.
+        """
+        if random.random() < 0.1:
+            return Item(self.rect.midbottom, "weapon", "blaster")
+        return None
