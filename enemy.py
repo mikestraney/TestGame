@@ -34,7 +34,6 @@ class Enemy(pygame.sprite.Sprite):
     def kill(self) -> None:
         physics.space.remove(self.body, self.shape)
         super().kill()
-
     # hooks for item drops
     def drop(self):
         """Return an ``Item`` dropped by this enemy or ``None``.

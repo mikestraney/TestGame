@@ -2,6 +2,7 @@ import pygame
 import pymunk
 import physics
 from bullet import Bullet
+from inventory import Inventory
 from settings import (
     WIDTH,
     PLAYER_SPEED,
@@ -16,8 +17,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, pos):
         super().__init__()
-        self.image = pygame.Surface((40, 50))
-        self.image.fill((0, 255, 0))
+        self.image = pygame.Surface((40, 50), pygame.SRCALPHA)
         self.rect = self.image.get_rect(midbottom=pos)
         mass = 1
         moment = pymunk.moment_for_box(mass, self.rect.size)
@@ -30,6 +30,9 @@ class Player(pygame.sprite.Sprite):
         self.direction = 1
         self.last_shot = 0
         self.shoot_delay = 250  # milliseconds
+        # inventory and appearance layers
+        self.inventory = Inventory()
+        self.update_image()
 
     def handle_input(self, keys):
         vx = 0
@@ -61,6 +64,10 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, keys):
         self.handle_input(keys)
+        # refresh appearance when equipment changes
+        if self.inventory.dirty:
+            self.update_image()
+            self.inventory.dirty = False
 
     def sync_with_body(self, platforms=None):
         self.rect.center = self.body.position
@@ -79,5 +86,22 @@ class Player(pygame.sprite.Sprite):
             )
         else:
             self.on_ground = (
-                abs(self.rect.bottom - GROUND_LEVEL) < 1 and abs(self.body.velocity.y) < 1
+                abs(self.rect.bottom - GROUND_LEVEL) < 1
+                and abs(self.body.velocity.y) < 1
             )
+
+    def update_image(self):
+        """Redraw the player's base and any equipped items."""
+        midbottom = self.rect.midbottom
+        self.image = pygame.Surface((40, 50), pygame.SRCALPHA)
+        self.image.fill((0, 255, 0))
+        if self.inventory.armor_sprite:
+            self.image.blit(self.inventory.armor_sprite, (0, 0))
+        if self.inventory.weapon_sprite:
+            # draw weapon near the hands on the right side
+            weapon_pos = (
+                self.image.get_width() - self.inventory.weapon_sprite.get_width(),
+                10,
+            )
+            self.image.blit(self.inventory.weapon_sprite, weapon_pos)
+        self.rect = self.image.get_rect(midbottom=midbottom)
