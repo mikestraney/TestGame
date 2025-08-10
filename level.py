@@ -7,7 +7,7 @@ import pytmx
 import pymunk
 
 import physics
-from settings import WIDTH, HEIGHT
+from settings import WIDTH, HEIGHT, FPS
 
 
 class Level:
@@ -39,7 +39,7 @@ class Level:
         # Create parallax background layers
         self.parallax_layers = []
         colors = [(20, 20, 40), (40, 40, 80), (60, 60, 120)]
-        speeds = [0.2, 0.5, 1.0]
+        speeds = [0.2 * FPS, 0.5 * FPS, 1.0 * FPS]  # pixels per second
         for color, speed in zip(colors, speeds):
             surf = pygame.Surface((WIDTH, HEIGHT))
             surf.fill(color)
@@ -64,11 +64,11 @@ class Level:
         Parameters
         ----------
         dt: float
-            Milliseconds since last frame.
+            Seconds since last frame.
         """
 
         for layer in self.parallax_layers:
-            layer["x"] = (layer["x"] - layer["speed"]) % WIDTH
+            layer["x"] = (layer["x"] - layer["speed"] * dt) % WIDTH
 
     def draw(self, screen: pygame.Surface) -> None:
         """Draw background and map layers to the screen."""

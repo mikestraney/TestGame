@@ -3,13 +3,7 @@ import pymunk
 import physics
 from bullet import Bullet
 from inventory import Inventory
-from settings import (
-    WIDTH,
-    PLAYER_SPEED,
-    PLAYER_JUMP,
-    FPS,
-    GROUND_LEVEL,
-)
+from settings import WIDTH, PLAYER_SPEED, PLAYER_JUMP, GROUND_LEVEL
 
 
 class Player(pygame.sprite.Sprite):
@@ -38,25 +32,28 @@ class Player(pygame.sprite.Sprite):
         self.inventory = Inventory()
         self.update_image()
 
-    def handle_input(self, keys):
+    def handle_input(self, keys: pygame.key.ScancodeWrapper) -> None:
+        """Process movement keys and update body velocity."""
         vx = 0
         if keys[pygame.K_LEFT]:
-            vx -= PLAYER_SPEED * FPS
+            vx -= PLAYER_SPEED
             self.direction = -1
         if keys[pygame.K_RIGHT]:
-            vx += PLAYER_SPEED * FPS
+            vx += PLAYER_SPEED
             self.direction = 1
         self.body.velocity = (vx, self.body.velocity.y)
 
         if keys[pygame.K_UP] or keys[pygame.K_z]:
             self.jump()
 
-    def jump(self):
+    def jump(self) -> None:
+        """Give the player an upward impulse if on the ground."""
         if self.on_ground:
-            self.body.velocity = (self.body.velocity.x, -PLAYER_JUMP * FPS)
+            self.body.velocity = (self.body.velocity.x, -PLAYER_JUMP)
             self.on_ground = False
 
-    def shoot(self, bullets_group):
+    def shoot(self, bullets_group: pygame.sprite.Group) -> None:
+        """Fire a bullet if the weapon's delay has passed."""
         now = pygame.time.get_ticks()
         if now - self.last_shot >= self.shoot_delay:
             pos = self.rect.midright if self.direction == 1 else self.rect.midleft
@@ -64,18 +61,17 @@ class Player(pygame.sprite.Sprite):
             bullets_group.add(bullet)
             self.last_shot = now
 
-    def update(self, keys):
+    def update(self, keys: pygame.key.ScancodeWrapper) -> None:
+        """Handle input and refresh appearance."""
         self.handle_input(keys)
-        # refresh appearance when equipment changes
         if self.inventory.dirty:
             self.update_image()
             self.inventory.dirty = False
 
-    def sync_with_body(self, platforms=None):
-        # keep the pygame rect aligned with the physics body
+    def sync_with_body(self, platforms: list[pygame.Rect] | None = None) -> None:
+        """Keep the sprite aligned with the physics body and check ground."""
         self.rect.center = self.body.position
 
-        # clamp to screen horizontally
         if self.rect.left < 0:
             self.rect.left = 0
             self.body.position = (self.rect.centerx, self.body.position.y)
@@ -85,7 +81,6 @@ class Player(pygame.sprite.Sprite):
             self.body.position = (self.rect.centerx, self.body.position.y)
             self.body.velocity = (0, self.body.velocity.y)
 
-        # ground/platform contact check
         if platforms:
             self.on_ground = any(
                 abs(self.rect.bottom - rect.top) < 1 and abs(self.body.velocity.y) < 1

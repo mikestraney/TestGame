@@ -2,11 +2,10 @@ import pygame
 import random
 import physics
 from player import Player
-from enemy import Enemy
+from enemy import RunnerEnemy
 from level import Level
 from item import Item
 from settings import WIDTH, HEIGHT, FPS, SPAWN_DELAY, GROUND_LEVEL
-        main
 
 
 def run():
@@ -36,31 +35,28 @@ def run():
     running = True
     while running:
         dt_ms = clock.tick(FPS)           # milliseconds
-        dt = dt_ms / 1000.0               # seconds (often what physics engines expect)
+        dt = dt_ms / 1000.0               # seconds
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == enemy_event:
-                enemies.add(Enemy(WIDTH + 40, GROUND_LEVEL))
+                enemies.add(RunnerEnemy(WIDTH + 40))
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-        main
                 player.shoot(bullets)
 
         keys = pygame.key.get_pressed()
 
         # --- Update phase ---
-        level.update(dt)          # if your Level expects seconds, pass dt; if ms, pass dt_ms
+        level.update(dt)
         player.update(keys)
-        bullets.update()
-        enemies.update()
+        bullets.update(dt)
+        enemies.update(dt)
         items.update()
-        physics.update(dt)        # step your physics world; change to dt_ms if your helper expects ms
+        physics.update(dt)
 
         # keep sprites aligned with physics bodies
         player.sync_with_body(level.platform_rects)
-        for enemy in enemies:
-            enemy.sync_with_body()
 
         # --- Collisions & pickups ---
         hits = pygame.sprite.groupcollide(bullets, enemies, True, False)
@@ -75,7 +71,6 @@ def run():
         pickups = pygame.sprite.spritecollide(player, items, True)
         for item in pickups:
             player.inventory.equip(item.item_type, item.name)
-        main
 
         if pygame.sprite.spritecollide(player, enemies, False):
             running = False
