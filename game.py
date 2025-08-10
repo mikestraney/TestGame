@@ -1,10 +1,12 @@
 import pygame
+import random
 import physics
 from player import Player
 from enemy import Enemy
 from level import Level
 from item import Item
 from settings import WIDTH, HEIGHT, FPS, SPAWN_DELAY, GROUND_LEVEL
+        main
 
 
 def run():
@@ -42,6 +44,7 @@ def run():
             elif event.type == enemy_event:
                 enemies.add(Enemy(WIDTH + 40, GROUND_LEVEL))
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+        main
                 player.shoot(bullets)
 
         keys = pygame.key.get_pressed()
@@ -52,7 +55,6 @@ def run():
         bullets.update()
         enemies.update()
         items.update()
-
         physics.update(dt)        # step your physics world; change to dt_ms if your helper expects ms
 
         # keep sprites aligned with physics bodies
@@ -73,6 +75,7 @@ def run():
         pickups = pygame.sprite.spritecollide(player, items, True)
         for item in pickups:
             player.inventory.equip(item.item_type, item.name)
+        main
 
         if pygame.sprite.spritecollide(player, enemies, False):
             running = False

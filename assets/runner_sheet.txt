@@ -1,0 +1,4 @@
+# R,G,B frames for runner
+255,0,0
+200,0,0
+150,0,0
