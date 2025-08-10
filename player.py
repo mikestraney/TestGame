@@ -2,6 +2,7 @@ import pygame
 import pymunk
 import physics
 from bullet import Bullet
+from particles import emit_smoke
 from settings import (
     WIDTH,
     PLAYER_SPEED,
@@ -14,7 +15,7 @@ from settings import (
 class Player(pygame.sprite.Sprite):
     """Main controllable character."""
 
-    def __init__(self, pos):
+    def __init__(self, pos, particles_group=None):
         super().__init__()
         self.image = pygame.Surface((40, 50))
         self.image.fill((0, 255, 0))
@@ -30,6 +31,7 @@ class Player(pygame.sprite.Sprite):
         self.direction = 1
         self.last_shot = 0
         self.shoot_delay = 250  # milliseconds
+        self.particles = particles_group
 
     def handle_input(self, keys):
         vx = 0
@@ -47,6 +49,8 @@ class Player(pygame.sprite.Sprite):
         if self.on_ground:
             self.body.velocity = (self.body.velocity.x, -PLAYER_JUMP * FPS)
             self.on_ground = False
+            if self.particles:
+                emit_smoke(self.rect.midbottom, self.particles)
 
     def shoot(self, bullets_group):
         now = pygame.time.get_ticks()
@@ -63,6 +67,7 @@ class Player(pygame.sprite.Sprite):
         self.handle_input(keys)
 
     def sync_with_body(self):
+        was_on_ground = self.on_ground
         self.rect.center = self.body.position
         if self.rect.left < 0:
             self.rect.left = 0
@@ -76,3 +81,5 @@ class Player(pygame.sprite.Sprite):
             abs(self.rect.bottom - GROUND_LEVEL) < 1
             and abs(self.body.velocity.y) < 1
         )
+        if self.on_ground and not was_on_ground and self.particles:
+            emit_smoke(self.rect.midbottom, self.particles)
