@@ -1,4 +1,5 @@
 import pygame
+import physics
 from player import Player
 from enemy import Enemy
 from settings import (
@@ -12,6 +13,7 @@ from settings import (
 
 def run():
     pygame.init()
+    physics.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Contra Clone")
     clock = pygame.time.Clock()
@@ -41,6 +43,8 @@ def run():
         player.update(keys)
         bullets.update()
         enemies.update()
+        physics.update(dt)
+        player.sync_with_body()
 
         # collisions
         hits = pygame.sprite.groupcollide(bullets, enemies, True, True)
