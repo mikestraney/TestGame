@@ -2,13 +2,8 @@ import pygame
 import physics
 from player import Player
 from enemy import Enemy
-from settings import (
-    WIDTH,
-    HEIGHT,
-    FPS,
-    SPAWN_DELAY,
-    GROUND_LEVEL,
-)
+from level import Level
+from settings import WIDTH, HEIGHT, FPS, SPAWN_DELAY, GROUND_LEVEL
 
 
 def run():
@@ -18,6 +13,7 @@ def run():
     pygame.display.set_caption("Contra Clone")
     clock = pygame.time.Clock()
 
+    level = Level("assets/level.tmx")
     player = Player((80, GROUND_LEVEL))
     bullets = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
@@ -34,17 +30,20 @@ def run():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == enemy_event:
-                enemy = Enemy(WIDTH + 40)
+                enemy = Enemy(WIDTH + 40, GROUND_LEVEL)
                 enemies.add(enemy)
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 player.shoot(bullets)
 
         keys = pygame.key.get_pressed()
+        level.update(dt)
         player.update(keys)
         bullets.update()
         enemies.update()
         physics.update(dt)
-        player.sync_with_body()
+        player.sync_with_body(level.platform_rects)
+        for enemy in enemies:
+            enemy.sync_with_body()
 
         # collisions
         hits = pygame.sprite.groupcollide(bullets, enemies, True, True)
@@ -52,8 +51,7 @@ def run():
         if pygame.sprite.spritecollide(player, enemies, False):
             running = False
 
-        screen.fill((30, 30, 30))
-        pygame.draw.rect(screen, (100, 50, 20), (0, GROUND_LEVEL, WIDTH, HEIGHT - GROUND_LEVEL))
+        level.draw(screen)
         all_sprites = pygame.sprite.Group(player, bullets, enemies)
         all_sprites.draw(screen)
 

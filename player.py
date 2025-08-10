@@ -62,7 +62,7 @@ class Player(pygame.sprite.Sprite):
     def update(self, keys):
         self.handle_input(keys)
 
-    def sync_with_body(self):
+    def sync_with_body(self, platforms=None):
         self.rect.center = self.body.position
         if self.rect.left < 0:
             self.rect.left = 0
@@ -72,7 +72,12 @@ class Player(pygame.sprite.Sprite):
             self.rect.right = WIDTH
             self.body.position = (self.rect.centerx, self.body.position.y)
             self.body.velocity = (0, self.body.velocity.y)
-        self.on_ground = (
-            abs(self.rect.bottom - GROUND_LEVEL) < 1
-            and abs(self.body.velocity.y) < 1
-        )
+        if platforms:
+            self.on_ground = any(
+                abs(self.rect.bottom - rect.top) < 1 and abs(self.body.velocity.y) < 1
+                for rect in platforms
+            )
+        else:
+            self.on_ground = (
+                abs(self.rect.bottom - GROUND_LEVEL) < 1 and abs(self.body.velocity.y) < 1
+            )
