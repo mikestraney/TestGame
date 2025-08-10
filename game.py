@@ -1,7 +1,8 @@
 import pygame
+import random
 import physics
 from player import Player
-from enemy import Enemy
+from enemy import RunnerEnemy, FlyerEnemy, BossEnemy
 from settings import (
     WIDTH,
     HEIGHT,
@@ -34,7 +35,10 @@ def run():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == enemy_event:
-                enemy = Enemy(WIDTH + 40)
+                enemy_cls = random.choices(
+                    [RunnerEnemy, FlyerEnemy, BossEnemy], [0.5, 0.3, 0.2]
+                )[0]
+                enemy = enemy_cls(WIDTH + 40)
                 enemies.add(enemy)
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 player.shoot(bullets)
@@ -42,7 +46,7 @@ def run():
         keys = pygame.key.get_pressed()
         player.update(keys)
         bullets.update()
-        enemies.update()
+        enemies.update(dt)
         physics.update(dt)
         player.sync_with_body()
 
