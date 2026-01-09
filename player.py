@@ -2,14 +2,20 @@ import pygame
 import pymunk
 import physics
 from bullet import Bullet
-from inventory import Inventory
-from settings import WIDTH, PLAYER_SPEED, PLAYER_JUMP, GROUND_LEVEL
+from particles import emit_smoke
+from settings import (
+    WIDTH,
+    PLAYER_SPEED,
+    PLAYER_JUMP,
+    FPS,
+    GROUND_LEVEL,
+)
 
 
 class Player(pygame.sprite.Sprite):
     """Main controllable character."""
 
-    def __init__(self, pos):
+    def __init__(self, pos, particles_group=None):
         super().__init__()
         self.image = pygame.Surface((40, 50), pygame.SRCALPHA)
         self.rect = self.image.get_rect(midbottom=pos)
@@ -27,6 +33,7 @@ class Player(pygame.sprite.Sprite):
         self.direction = 1
         self.last_shot = 0
         self.shoot_delay = 250  # milliseconds
+        self.particles = particles_group
 
         # inventory and appearance layers
         self.inventory = Inventory()
@@ -51,15 +58,22 @@ class Player(pygame.sprite.Sprite):
         if self.on_ground:
             self.body.velocity = (self.body.velocity.x, -PLAYER_JUMP)
             self.on_ground = False
+            if self.particles:
+                emit_smoke(self.rect.midbottom, self.particles)
 
-    def shoot(self, bullets_group: pygame.sprite.Group) -> None:
-        """Fire a bullet if the weapon's delay has passed."""
+    def shoot(self, bullets_group):
+        """Fire a bullet if enough time has passed.
+
+        Returns the created bullet so callers can add it to other groups.
+        """
         now = pygame.time.get_ticks()
         if now - self.last_shot >= self.shoot_delay:
             pos = self.rect.midright if self.direction == 1 else self.rect.midleft
             bullet = Bullet(pos, self.direction)
             bullets_group.add(bullet)
             self.last_shot = now
+            return bullet
+        return None
 
     def update(self, keys: pygame.key.ScancodeWrapper) -> None:
         """Handle input and refresh appearance."""
@@ -68,8 +82,8 @@ class Player(pygame.sprite.Sprite):
             self.update_image()
             self.inventory.dirty = False
 
-    def sync_with_body(self, platforms: list[pygame.Rect] | None = None) -> None:
-        """Keep the sprite aligned with the physics body and check ground."""
+    def sync_with_body(self):
+        was_on_ground = self.on_ground
         self.rect.center = self.body.position
 
         if self.rect.left < 0:
@@ -80,34 +94,9 @@ class Player(pygame.sprite.Sprite):
             self.rect.right = WIDTH
             self.body.position = (self.rect.centerx, self.body.position.y)
             self.body.velocity = (0, self.body.velocity.y)
-
-        if platforms:
-            self.on_ground = any(
-                abs(self.rect.bottom - rect.top) < 1 and abs(self.body.velocity.y) < 1
-                for rect in platforms
-            )
-        else:
-            self.on_ground = (
-                abs(self.rect.bottom - GROUND_LEVEL) < 1
-                and abs(self.body.velocity.y) < 1
-            )
-
-    def update_image(self):
-        """Redraw the player's base and any equipped items."""
-        midbottom = self.rect.midbottom
-        self.image = pygame.Surface((40, 50), pygame.SRCALPHA)
-        self.image.fill((0, 255, 0))
-
-        if self.inventory.armor_sprite:
-            self.image.blit(self.inventory.armor_sprite, (0, 0))
-
-        if self.inventory.weapon_sprite:
-            # draw weapon near the hands on the right side
-            weapon_pos = (
-                self.image.get_width() - self.inventory.weapon_sprite.get_width(),
-                10,
-            )
-            self.image.blit(self.inventory.weapon_sprite, weapon_pos)
-
-        # keep rect anchor stable after redrawing
-        self.rect = self.image.get_rect(midbottom=midbottom)
+        self.on_ground = (
+            abs(self.rect.bottom - GROUND_LEVEL) < 1
+            and abs(self.body.velocity.y) < 1
+        )
+        if self.on_ground and not was_on_ground and self.particles:
+            emit_smoke(self.rect.midbottom, self.particles)
