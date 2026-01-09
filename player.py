@@ -17,9 +17,10 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, pos, particles_group=None):
         super().__init__()
-        self.image = pygame.Surface((40, 50))
-        self.image.fill((0, 255, 0))
+        self.image = pygame.Surface((40, 50), pygame.SRCALPHA)
         self.rect = self.image.get_rect(midbottom=pos)
+
+        # Physics body & shape
         mass = 1
         moment = pymunk.moment_for_box(mass, self.rect.size)
         self.body = pymunk.Body(mass, moment)
@@ -27,27 +28,35 @@ class Player(pygame.sprite.Sprite):
         self.shape = pymunk.Poly.create_box(self.body, self.rect.size)
         self.shape.elasticity = 0.0
         physics.space.add(self.body, self.shape)
+
         self.on_ground = False
         self.direction = 1
         self.last_shot = 0
         self.shoot_delay = 250  # milliseconds
         self.particles = particles_group
 
-    def handle_input(self, keys):
+        # inventory and appearance layers
+        self.inventory = Inventory()
+        self.update_image()
+
+    def handle_input(self, keys: pygame.key.ScancodeWrapper) -> None:
+        """Process movement keys and update body velocity."""
         vx = 0
         if keys[pygame.K_LEFT]:
-            vx -= PLAYER_SPEED * FPS
+            vx -= PLAYER_SPEED
             self.direction = -1
         if keys[pygame.K_RIGHT]:
-            vx += PLAYER_SPEED * FPS
+            vx += PLAYER_SPEED
             self.direction = 1
         self.body.velocity = (vx, self.body.velocity.y)
+
         if keys[pygame.K_UP] or keys[pygame.K_z]:
             self.jump()
 
-    def jump(self):
+    def jump(self) -> None:
+        """Give the player an upward impulse if on the ground."""
         if self.on_ground:
-            self.body.velocity = (self.body.velocity.x, -PLAYER_JUMP * FPS)
+            self.body.velocity = (self.body.velocity.x, -PLAYER_JUMP)
             self.on_ground = False
             if self.particles:
                 emit_smoke(self.rect.midbottom, self.particles)
@@ -59,22 +68,24 @@ class Player(pygame.sprite.Sprite):
         """
         now = pygame.time.get_ticks()
         if now - self.last_shot >= self.shoot_delay:
-            if self.direction == 1:
-                pos = self.rect.midright
-            else:
-                pos = self.rect.midleft
+            pos = self.rect.midright if self.direction == 1 else self.rect.midleft
             bullet = Bullet(pos, self.direction)
             bullets_group.add(bullet)
             self.last_shot = now
             return bullet
         return None
 
-    def update(self, keys):
+    def update(self, keys: pygame.key.ScancodeWrapper) -> None:
+        """Handle input and refresh appearance."""
         self.handle_input(keys)
+        if self.inventory.dirty:
+            self.update_image()
+            self.inventory.dirty = False
 
     def sync_with_body(self):
         was_on_ground = self.on_ground
         self.rect.center = self.body.position
+
         if self.rect.left < 0:
             self.rect.left = 0
             self.body.position = (self.rect.centerx, self.body.position.y)

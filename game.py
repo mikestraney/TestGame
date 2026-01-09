@@ -1,15 +1,12 @@
 import pygame
+import random
 import physics
 import particles
 from player import Player
-from enemy import Enemy
-from settings import (
-    WIDTH,
-    HEIGHT,
-    FPS,
-    SPAWN_DELAY,
-    GROUND_LEVEL,
-)
+from enemy import RunnerEnemy
+from level import Level
+from item import Item
+from settings import WIDTH, HEIGHT, FPS, SPAWN_DELAY, GROUND_LEVEL
 
 
 def run():
@@ -33,7 +30,9 @@ def run():
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     running = True
     while running:
-        dt = clock.tick(FPS)
+        dt_ms = clock.tick(FPS)           # milliseconds
+        dt = dt_ms / 1000.0               # seconds
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -47,12 +46,14 @@ def run():
                     all_sprites.add(bullet)
 
         keys = pygame.key.get_pressed()
+
+        # --- Update phase ---
+        level.update(dt)
         player.update(keys)
         bullets.update()
         enemies.update()
         particle_group.update()
         physics.update(dt)
-        player.sync_with_body()
 
         # collisions
         hits = pygame.sprite.groupcollide(bullets, enemies, True, True)

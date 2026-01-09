@@ -1,6 +1,31 @@
-# Test Games
+# Test Game
 
-This repository contains a simple side-scrolling platform shooter inspired by **Contra**. It is built with [Pygame](https://www.pygame.org/).
+A lightweight side-scrolling run-and-gun prototype inspired by 8-bit classics.
+The game is written entirely in Python and powered by the Pygame framework.
+
+## Gameplay
+
+Guide a commando across a horizontal battlefield, jumping over obstacles and
+blasting enemies that march in from the right. Every defeated foe boosts your
+score, while a single collision ends the run.
+
+### Controls
+
+- **Move:** Arrow keys
+- **Jump:** Z or Up arrow
+- **Shoot:** Space bar
+
+Sprites, basic physics, and collision detection are handled with Pygame's sprite
+system. Bullets fly across the screen and disappear when they leave the play
+area.
+
+## Libraries
+
+The project purposefully keeps dependencies minimal:
+
+- [Pygame](https://www.pygame.org/) – provides the window, main loop, event
+  handling, sprite groups, fonts, and drawing operations.
+- Python's standard library for core language features and timing.
 
 ## Setup
 
@@ -13,4 +38,4 @@ This repository contains a simple side-scrolling platform shooter inspired by **
    python game.py
    ```
 
-Use the **arrow keys** to move, **Z or Up** to jump, and **Space** to shoot. Enemies spawn from the right; shooting them increases your score. Colliding with an enemy ends the game.
+Enjoy experimenting with this small codebase or use it as a starting point for your own shooter.
